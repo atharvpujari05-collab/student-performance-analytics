@@ -144,7 +144,168 @@ st.caption(
 )
 
 # Prediction interface
-https://student-performance-analytics-lhzs97vbdgktkuuhz6pefd.streamlit.app/
+st.header("Predict a Student's Final Grade")
+st.write("Enter the student's information below.")
+
+# Choose the prediction model before submitting the form
+selected_model = st.selectbox(
+    "Choose Prediction Model",
+    list(trained_models.keys())
+)
+
+with st.form("prediction_form"):
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        studytime = st.selectbox(
+            "Weekly Study Time",
+            options=[1, 2, 3, 4],
+            format_func=lambda x: {
+                1: "1 — Less than 2 hours",
+                2: "2 — 2 to 5 hours",
+                3: "3 — 5 to 10 hours",
+                4: "4 — More than 10 hours"
+            }[x]
+        )
+
+        failures = st.number_input(
+            "Past Class Failures",
+            min_value=0,
+            max_value=4,
+            value=0
+        )
+
+        absences = st.number_input(
+            "School Absences",
+            min_value=0,
+            max_value=100,
+            value=4
+        )
+
+    with col2:
+        medu = st.selectbox(
+            "Mother's Education Level",
+            options=[0, 1, 2, 3, 4],
+            format_func=lambda x: {
+                0: "0 — None",
+                1: "1 — Primary",
+                2: "2 — 5th–9th Grade",
+                3: "3 — Secondary",
+                4: "4 — Higher Education"
+            }[x]
+        )
+
+        fedu = st.selectbox(
+            "Father's Education Level",
+            options=[0, 1, 2, 3, 4],
+            format_func=lambda x: {
+                0: "0 — None",
+                1: "1 — Primary",
+                2: "2 — 5th–9th Grade",
+                3: "3 — Secondary",
+                4: "4 — Higher Education"
+            }[x]
+        )
+
+        traveltime = st.selectbox(
+            "Travel Time to School",
+            options=[1, 2, 3, 4],
+            format_func=lambda x: {
+                1: "1 — <15 min",
+                2: "2 — 15–30 min",
+                3: "3 — 30–60 min",
+                4: "4 — >60 min"
+            }[x]
+        )
+
+    with col3:
+        freetime = st.selectbox(
+            "Free Time After School",
+            options=[1, 2, 3, 4, 5],
+            format_func=lambda x: {
+                1: "1 — Very Low",
+                2: "2 — Low",
+                3: "3 — Average",
+                4: "4 — High",
+                5: "5 — Very High"
+            }[x]
+        )
+
+        goout = st.selectbox(
+            "Going Out with Friends",
+            options=[1, 2, 3, 4, 5],
+            format_func=lambda x: {
+                1: "1 — Very Low",
+                2: "2 — Low",
+                3: "3 — Average",
+                4: "4 — High",
+                5: "5 — Very High"
+            }[x]
+        )
+
+        health = st.selectbox(
+            "Self-Reported Health",
+            options=[1, 2, 3, 4, 5],
+            format_func=lambda x: {
+                1: "1 — Very Bad",
+                2: "2 — Bad",
+                3: "3 — Fair",
+                4: "4 — Good",
+                5: "5 — Very Good"
+            }[x]
+        )
+
+    submitted = st.form_submit_button(
+        "Predict Final Grade",
+        type="primary"
+    )
+
+if submitted:
+    input_data = pd.DataFrame([{
+        "studytime": studytime,
+        "failures": failures,
+        "absences": absences,
+        "Medu": medu,
+        "Fedu": fedu,
+        "traveltime": traveltime,
+        "freetime": freetime,
+        "goout": goout,
+        "health": health
+    }])
+
+    prediction = trained_models[selected_model].predict(
+        input_data[features]
+    )[0]
+
+    prediction = max(0, min(20, prediction))
+
+    st.subheader(
+        f"Estimated Final Grade: {prediction:.2f}/20"
+    )
+
+    st.progress(
+        int(round(prediction / 20 * 100))
+    )
+
+    if prediction >= 16:
+        st.success(
+            "The model estimates a high final grade."
+        )
+    elif prediction >= 10:
+        st.info(
+            "The model estimates a moderate final grade."
+        )
+    else:
+        st.warning(
+            "The model estimates a low final grade. "
+            "This is only an estimate, not a definite outcome."
+        )
+
+    st.caption(
+        f"Prediction made using {selected_model}. "
+        "This is a statistical estimate based on the selected "
+        "features and historical data. Actual results may differ."
+    )
 st.divider()
 st.caption(
     "Dataset: UCI Student Performance | "
